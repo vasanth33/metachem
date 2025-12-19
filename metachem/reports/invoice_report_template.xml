@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Paper Format Configuration -->
+    <record id="paperformat_custom_invoice" model="report.paperformat">
+        <field name="name">Custom Invoice Format</field>
+        <field name="default" eval="True"/>
+        <field name="format">A4</field>
+        <field name="orientation">Portrait</field>
+        <field name="margin_top">40</field>
+        <field name="margin_bottom">25</field>
+        <field name="margin_left">7</field>
+        <field name="margin_right">7</field>
+        <field name="header_line" eval="False"/>
+        <field name="header_spacing">35</field>
+        <field name="dpi">90</field>
+    </record>
+
+    <!-- Report Definition -->
+    <record id="action_report_custom_invoice" model="ir.actions.report">
+        <field name="name">Custom Invoice</field>
+        <field name="model">account.move</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">metachem.report_custom_invoice_document</field>
+        <field name="report_file">metachem.report_custom_invoice_document</field>
+        <field name="print_report_name">'Invoice - %s' % (object.name)</field>
+        <field name="binding_model_id" ref="account.model_account_move"/>
+        <field name="binding_type">report</field>
+        <field name="paperformat_id" ref="paperformat_custom_invoice"/>
+    </record>
+
+    <!-- QWeb Template -->
+	<template id="report_custom_invoice_document">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.external_layout">
+                    <div class="page" style="border: none !important;">
+                        <style>
+                            /* KILL ALL TABLE BORDERS – wkhtmltopdf safe */
+                            table,
+                            table * {
+                                border: 0 !important;
+                                outline: none !important;
+                                box-shadow: none !important;
+                            }
+                        
+                            table {
+                                border-collapse: collapse !important;
+                                border-spacing: 0 !important;
+                            }
+                        
+                            /* Extra safety for external_layout */
+                            .page {
+                                border: 0 !important;
+                                box-shadow: none !important;
+                            }
+    
+                            .page {
+                                border: none !important;
+                            }
+                            .custom-invoice-table {
+                                width: 100%;
+                                margin-top: 20px;
+                                font-size: 11pt;
+                                border: none !important;
+                            }
+                            .custom-invoice-table thead {
+                                display: none;
+                            }
+                            .custom-invoice-table th {
+                                display: none;
+                            }
+                            .custom-invoice-table td {
+                                border: none !important;
+                                padding: 8px 4px;
+                                text-align: right;
+                            }
+                            .custom-invoice-table td.text-left {
+                                text-align: left;
+                            }
+                            .custom-invoice-table td.text-center {
+                                text-align: center;
+                            }
+                            .custom-invoice-table tbody tr {
+                                border: none !important;
+                            }
+                            .total-section {
+                                margin-top: 20px;
+                                text-align: right;
+                            }
+                            .total-row {
+                                margin: 5px 0;
+                                font-size: 12pt;
+                            }
+                            .total-row strong {
+                                display: inline-block;
+                                width: 150px;
+                            }
+                            .amount-in-words {
+                                margin-top: 20px;
+                                font-size: 11pt;
+                                font-weight: bold;
+                            }
+                            .header-info {
+                                margin-bottom: 30px;
+                            }
+                            .company-name {
+                                font-size: 18pt;
+                                font-weight: bold;
+                                margin-bottom: 5px;
+                                text-align: left;
+                            }
+                            .company-details {
+                                font-size: 10pt;
+                                margin: 2px 0;
+                                text-align: left;
+                            }
+                            .invoice-number {
+                                font-size: 14pt;
+                                font-weight: bold;
+                                margin-top: 0;
+                                text-align: right;
+                            }
+                        </style>
+
+                        <!-- Header Section -->
+                        <div class="header-info">
+                            <div class="row">
+                                <div class="col-6">
+                                    <div class="company-name">
+                                        <span t-field="o.company_id.name"/>
+                                    </div>
+                                    <div class="company-details">
+                                        TEL: <span t-field="o.company_id.phone"/>
+                                    </div>
+                                    <div class="company-details">
+                                        FAX: <span t-field="o.company_id.fax"/>
+                                    </div>
+                                    <div class="company-details">
+                                        TRN: <span t-field="o.company_id.trn"/>
+                                    </div>
+                                </div>
+                                <div class="col-6" style="text-align: right;">
+                                    <div class="invoice-number">
+                                        <span t-field="o.name"/>
+                                    </div>
+                                    <div class="company-details" style="text-align: right;">
+                                        <span t-esc="o.invoice_date.strftime('%d-%b-%y') if o.invoice_date else ''"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Invoice Lines Table -->
+                        <table class="custom-invoice-table">
+
+                            <tbody>
+                                <t t-set="line_index" t-value="1"/>
+                                <t t-foreach="o.invoice_line_ids" t-as="line">
+                                    <tr>
+                                        <td class="text-center">
+                                            <span t-esc="line_index+1"/>
+                                        </td>
+                                        <td class="text-left">
+                                            <span t-field="line.product_id.name"/>
+                                        </td>
+                                        <td class="text-center">
+                                            <span t-esc="'%.2f' % line.quantity"/>
+                                            <span t-field="line.product_uom_id.name"/>
+                                        </td>
+                                        <td>
+                                            <span t-esc="'%.2f' % line.price_unit"/>
+                                        </td>                                        
+                                        <td>
+                                            <span t-esc="'%.2f' % (line.price_unit * line.quantity)"/>
+                                        </td>
+                                        <td class="text-center">
+                                            5%
+                                        </td>
+                                        <td>
+                                            <span t-esc="'%.2f' % line.l10n_ae_vat_amount"/>
+                                        </td>                                            
+                                        <td>
+                                            <span t-esc="'%.2f' % line.price_subtotal"/>
+                                        </td>
+
+                                    </tr>
+                                    <t t-set="line_index" t-value="line_index + 1"/>
+                                </t>
+                            </tbody>
+                        </table>
+
+                        <!-- Amount in Words -->
+                        <div class="amount-in-words">
+                            <t t-set="amount_text" t-value="o.currency_id.amount_to_text(o.amount_total)"/>
+                            <span t-esc="amount_text"/> Only.
+                        </div>
+
+                        <!-- Totals Section -->
+                        <div class="total-section">
+                            <div class="total-row">
+                                <strong>Subtotal:</strong>
+                                <span t-esc="'%.2f' % o.amount_untaxed"/>
+                            </div>
+                            <div class="total-row">
+                                <strong>Tax (VAT):</strong>
+                                <span t-esc="'%.2f' % o.amount_tax"/>
+                            </div>
+                            <div class="total-row">
+                                <strong>Total:</strong>
+                                <span t-esc="'%.2f' % o.amount_total"/>
+                            </div>
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>
