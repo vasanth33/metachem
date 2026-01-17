@@ -7,6 +7,7 @@
         'views/hr_employee_views.xml',
         'views/invoice_report.xml',
         'views/res_company_view.xml',
+        'views/res_partner_view.xml',
         'reports/invoice_report_template.xml',
     ],
     'license': 'LGPL-3',

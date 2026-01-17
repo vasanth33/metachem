@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="report_dot_matrix_invoice_document">
+        <t t-call="web.basic_layout">
+            <t t-foreach="docs" t-as="doc">
+                <div class="page" style="font-family: 'Courier New', monospace; font-size: 14pt; position: relative; width: 250mm; height: 280mm;">
+                    
+                    <!-- Customer Details - Starting from 6cm (60mm) height, 2-13cm (20-130mm) width -->
+                    <!-- Only printing data values, no labels -->
+                    <div style="position: absolute; top: 60mm; left: 20mm; width: 110mm;">
+                        
+                        <!-- Customer Name -->
+                        <div style="top: 10mm; left: 0; width: 110mm;">
+                            <t t-esc="doc.partner_id.name"/>
+                        </div>
+                        
+                        <!-- Street -->
+                        <div style="top: 10mm; left: 0; width: 110mm;">
+                            <t t-esc="doc.partner_id.street or ''"/>
+                        </div>
+                        
+                        <!-- Street2 (if exists) -->
+                        <t t-if="doc.partner_id.street2">
+                            <div style="top: 10mm; left: 0; width: 110mm;">
+                                <t t-esc="doc.partner_id.street2"/>
+                            </div>
+                        </t>
+                        
+                        <!-- City and Country -->
+                        <div t-att-style="'top: ' + (str(15 if doc.partner_id.street2 else 10)) + 'mm; left: 0; width: 110mm;'">
+                            <t t-esc="doc.partner_id.city or ''"/> - <t t-esc="doc.partner_id.country_id.name or ''"/>
+                        </div>
+                        
+                        <!-- Phone (if exists) - no "Tel:" label -->
+                        <t t-if="doc.partner_id.phone">
+                            <div t-att-style="'top: ' + (str(20 if doc.partner_id.street2 else 15)) + 'mm; left: 0; width: 110mm;'">
+                                <t t-esc="doc.partner_id.phone"/>
+                            </div>
+                        </t>
+                        
+                        <!-- TRN/VAT (if exists) - no "TRN:" label -->
+                        <t t-if="doc.partner_id.vat">
+                            <t t-set="trn_top" t-value="25 if doc.partner_id.street2 and doc.partner_id.phone else (20 if doc.partner_id.street2 or doc.partner_id.phone else 15)"/>
+                            <div t-att-style="'top: ' + str(trn_top) + 'mm; left: 0; width: 110mm;'">
+                                <t t-esc="doc.partner_id.vat"/>
+                            </div>
+                        </t>
+                        
+                    </div>
+                    
+                    <!-- Invoice Header Information - Only data values, no labels -->
+                    <!-- Starting from 6cm height, 7-21.5cm (70-215mm) horizontal range -->
+                    <div style="position: absolute; top: 60mm; left: 230mm; width: 145mm;">
+                        
+                        <!-- Invoice Number -->
+                        <div style="position: absolute; top: 0mm; left: 0; width: 145mm; text-align: center;">
+                            <t t-esc="doc.name"/>
+                        </div>
+                        
+                        <!-- Invoice Date -->
+                        <div style="position: absolute; top: 7mm; left: 0; width: 145mm; text-align: center;">
+                            <t t-esc="doc.invoice_date.strftime('%d/%m/%Y') if doc.invoice_date else ''"/>
+                        </div>
+                        
+                        <!-- L.P.O. No. (Reference) -->
+                        <div style="position: absolute; top: 14mm; left: 0; width: 145mm; text-align: center;">
+                            <t t-esc="doc.ref or ''"/>
+                        </div>
+                        
+                        <!-- D.O. No. (Delivery Order) - leave empty or add custom field -->
+                        <div style="position: absolute; top: 21mm; left: 0; width: 145mm; text-align: left;">
+                        </div>
+                        
+                    </div>
+                    
+                    <!-- Starting from 9cm (90mm) down - this is where line items begin -->
+                    <div style="position: absolute; top: 110mm; left: 0; width: 100%;">
+                        
+                        <!-- Invoice Line Items - positioned precisely -->
+                        <t t-set="line_index" t-value="1"/>
+                        <t t-foreach="doc.invoice_line_ids" t-as="line">
+                            <!-- Each line will be approximately 5mm apart vertically -->
+                            <t t-set="vertical_position" t-value="(line_index - 1) * 5"/>
+                            <t t-set="tax" t-value="5"/>
+                            
+                            <div t-att-style="'' + str(vertical_position) + 'mm; left: 0; width: 100%; height: 20mm;'">
+                                
+                                <!-- SL. NO. at 0-3.2cm (0-32mm) -->
+                                <span t-att-style="'position: absolute; left: 5mm; width: 20mm; text-align: center;'">
+                                    <t t-esc="line_index"/>
+                                </span>
+                                
+                                <!-- DESCRIPTION at 2-11cm (20-110mm) -->
+                                <span t-att-style="'position: absolute; left: 20mm; width: 150mm; text-align: left;'">
+                                    <t t-esc="line.name"/>
+                                </span>
+                                
+                                <!-- QUANTITY at 11-13cm (110-130mm) -->
+                                <span t-att-style="'position: absolute; left: 170mm; width: 20mm; text-align: center;'">
+                                    <t t-esc="'%.2f' % line.quantity"/>
+                                </span>
+                                
+                                <!-- RATE at 11-13.5cm (110-135mm) - Adjusted to 13-14cm -->
+                                <span t-att-style="'position: absolute; left: 190mm; width: 25mm; text-align: center;'">
+                                    <t t-esc="'%.2f' % line.price_unit"/>
+                                </span>
+                                
+                                <!-- AMOUNT (EXCL VAT) at 13.5-16.5cm (135-165mm) -->
+                                <span t-att-style="'position: absolute; left: 210mm; width: 30mm; text-align: center;'">
+                                    <t t-esc="'%.2f' % line.price_subtotal"/>
+                                </span>
+                                
+                                <!-- VAT% at 16.5-17.5cm (165-175mm) -->
+                                <span t-att-style="'position: absolute; left: 240mm; width: 10mm; text-align: center;'">
+                                	 <t t-esc="tax"></t>
+                                </span>
+
+                                
+                                <!-- TAX AMOUNT at 17.5-19cm (175-190mm) -->
+                                <span t-att-style="'position: absolute; left: 250mm; width: 15mm; text-align: center;'">
+                                    <t t-esc="'%.2f' % (line.price_total - line.price_subtotal)"/>
+                                </span>
+                                
+                                <!-- TOTAL AMT (INCL VAT) at 19-21.5cm (190-215mm) -->
+                                <span t-att-style="'position: absolute; left: 265mm; width: 25omm; text-align: center;'">
+                                    <t t-esc="'%.2f' % line.price_total"/>
+                                </span>
+                                
+                            </div>
+                            
+                            <t t-set="line_index" t-value="line_index + 1"/>
+                        </t>
+                        
+                    </div>
+                    
+                    <!-- Total amounts section - adjust position based on your pre-printed paper -->
+                    <!-- This is an example, adjust the top position based on where totals should print -->
+                    <div style="position: absolute; top: 220mm; left: 0; width: 100%;">
+                        
+                        <!-- Amount Excluding VAT -->
+                        <div style="position: absolute; top: 0mm; left: 165mm; width: 50mm; text-align: right;">
+                            <t t-esc="'%.2f' % doc.amount_untaxed"/>
+                        </div>
+                        
+                        <!-- VAT Amount -->
+                        <div style="position: absolute; top: 8mm; left: 165mm; width: 50mm; text-align: right;">
+                            <t t-esc="'%.2f' % doc.amount_tax"/>
+                        </div>
+                        
+                        <!-- Total Amount Including VAT -->
+                        <div style="position: absolute; top: 16mm; left: 165mm; width: 50mm; text-align: right;">
+                            <t t-esc="'%.2f' % doc.amount_total"/>
+                        </div>
+                        
+                    </div>
+                    
+                    <!-- Amount in Words - adjust position as needed -->
+                    <div style="position: absolute; top: 220mm; left: 10mm; width: 140mm;">
+                        <t t-set="amount_words" t-value="doc.currency_id.amount_to_text(doc.amount_total)"/>
+                        <t t-esc="amount_words.title()"/>
+                    </div>
+                    
+                </div>
+            </t>
+        </t>
+    </template>
+</odoo>
