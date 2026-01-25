@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="ledger_account_document">
+        <t t-call="web.html_container">
+            <t t-foreach="report_data" t-as="data">
+                <t t-call="web.external_layout">
+                    <div class="page">
+                        <style>
+                            body { font-family: Arial, sans-serif; font-size: 9pt; }
+                            .company-header {
+                                text-align: center;
+                                margin-bottom: 5px;
+                            }
+                            .company-name {
+                                font-size: 12pt;
+                                font-weight: bold;
+                                margin-bottom: 2px;
+                            }
+                            .company-info {
+                                font-size: 9pt;
+                                line-height: 1.3;
+                            }
+                            .report-title {
+                                text-align: center;
+                                font-weight: bold;
+                                font-size: 11pt;
+                                margin: 10px 0 5px 0;
+                            }
+                            .report-subtitle {
+                                text-align: center;
+                                font-size: 9pt;
+                                margin-bottom: 15px;
+                            }
+                            .ledger-table {
+                                width: 100%;
+                                border-collapse: collapse;
+                                margin-top: 10px;
+                                font-size: 9pt;
+                            }
+                            .ledger-table th {
+                                background-color: #E7E6E6;
+                                padding: 5px;
+                                text-align: center;
+                                border: 1px solid #000;
+                                font-weight: bold;
+                            }
+                            .ledger-table td {
+                                padding: 4px 5px;
+                                border: 1px solid #000;
+                            }
+                            .text-right { text-align: right; }
+                            .text-center { text-align: center; }
+                            .bold { font-weight: bold; }
+                            .page-indicator {
+                                font-size: 8pt;
+                                line-height: 1.2;
+                            }
+                        </style>
+
+                        <!-- Company Header -->
+                        <div class="company-header">
+                            <div class="company-name">
+                                <t t-esc="company.name.upper()"/>
+                            </div>
+                            <div class="company-info">
+                                <div>
+                                    PO.BX <t t-esc="company.street or ''"/>, 
+                                    <t t-esc="company.city or ''"/> - 
+                                    <t t-esc="company.state_id.name if company.state_id else ''"/>
+                                </div>
+                                <div t-if="company.phone">
+                                    TEL: <t t-esc="company.phone"/>
+                                </div>
+                                <div t-if="company.city">
+                                    Emirate: <t t-esc="company.city"/>
+                                </div>
+                                <div t-if="data['partner'].email">
+                                    E-Mail: <t t-esc="data['partner'].email"/>
+                                </div>
+                                <div t-if="company.vat">
+                                    TRN: <t t-esc="company.vat"/>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Report Title -->
+                        <div class="report-title">SALES</div>
+                        <div class="report-subtitle">Ledger Account</div>
+                        
+                        <div class="report-subtitle" t-if="date_from">
+                            For <t t-esc="date_from.strftime('%d-%b-%y')"/>
+                            <t t-if="date_to and date_to != date_from">
+                                to <t t-esc="date_to.strftime('%d-%b-%y')"/>
+                            </t>
+                        </div>
+
+                        <!-- Ledger Table -->
+                        <table class="ledger-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 12%;">Date</th>
+                                    <th style="width: 35%;">Particulars</th>
+                                    <th style="width: 12%;">Vch Type</th>
+                                    <th style="width: 12%;">Vch No.</th>
+                                    <th style="width: 14%;">Debit</th>
+                                    <th style="width: 14%;">Credit</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Opening Balance -->
+                                <tr>
+                                    <td></td>
+                                    <td class="text-center bold">Opening Balance</td>
+                                    <td colspan="3"></td>
+                                    <td class="text-right" style="border-left: none;">
+                                    	<t t-esc="'{:,.2f}'.format(abs(data.get('opening_balance', 0)))"/>
+                                    </td>
+                                </tr>
+                                
+                                <!-- Transaction Lines -->
+                                <t t-set="total_debit" t-value="0"/>
+                                <t t-set="total_credit" t-value="0"/>
+                                <tr t-foreach="data['moves']" t-as="move">
+                                    <td class="text-center"><t t-esc="move['date'].strftime('%d-%b-%y')"/></td>
+                                    <td class="text-center">By <t t-esc="move['particulars']"/></td>
+                                    <td class="text-center"><t t-esc="move['vch_type']"/></td>
+                                    <td class="text-center"><t t-esc="move['vch_no']"/></td>
+                                    <td></td>
+                                    <td class="text-right">
+                                        <t t-if="move['debit']">
+                                            <t t-esc="'{:,.2f}'.format(move['debit'])"/>
+                                            <t t-set="total_debit" t-value="total_debit + move['debit']"/>
+                                        </t>
+                                    </td>
+                                </tr>
+                                <tr>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                    <td class="text-right">
+                                        <t t-if="move['debit']">
+                                            <t t-esc="'{:,.2f}'.format(abs(data['closing_balance']))"/>
+                                        </t>
+                                    </td>    
+                               </tr>
+                                <!-- Closing Balance -->
+                                <tr>
+                                    <td class="text-center">To</td>
+                                    <td class="text-center bold">Closing Balance</td>
+                                    <td></td>
+                                    <td></td>
+                                    <td class="text-right bold">
+                                        <t t-if="data['closing_balance'] != 0">
+                                            <t t-esc="'{:,.2f}'.format(abs(data['closing_balance']))"/>
+                                        </t>
+                                    </td>
+                                    <td class="text-right"></td>
+                                </tr>
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td class="text-right bold">
+                                        <t t-set="total_debit_col" t-value="abs(data['opening_balance'])+abs(data['closing_balance'])"/>
+                                        <t t-if="total_debit_col != 0">
+                                            <t t-esc="'{:,.2f}'.format(total_debit_col)"/>
+                                        </t>
+                                    </td>
+                                    <td class="text-right bold">
+                                        <t t-set="total_credit_col" t-value="abs(data['opening_balance']) + abs(data['closing_balance'])"/>
+                                        <t t-if="total_credit_col != 0">
+                                            <t t-esc="'{:,.2f}'.format(total_credit_col)"/>
+                                        </t>
+                                    </td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

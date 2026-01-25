@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- PDF Report -->
+    <record id="action_report_ledger_pdf" model="ir.actions.report">
+        <field name="name">Ledger Account (PDF)</field>
+        <field name="model">res.partner</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">ledger_report.ledger_account_document</field>
+        <field name="report_file">ledger_report.ledger_account_document</field>
+        <field name="print_report_name">'Ledger - %s' % (object.name)</field>
+    </record>
+
+    <!-- Excel Report -->
+    <record id="action_report_ledger_xlsx" model="ir.actions.report">
+        <field name="name">Ledger Account (Excel)</field>
+        <field name="model">res.partner</field>
+        <field name="report_type">xlsx</field>
+        <field name="report_name">ledger_report.ledger_account_xlsx</field>
+        <field name="report_file">ledger_report.ledger_account_xlsx</field>
+        <field name="print_report_name">'Ledger - %s' % (object.name)</field>
+    </record>
+</odoo>
