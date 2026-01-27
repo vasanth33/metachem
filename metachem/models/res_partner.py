@@ -12,4 +12,5 @@ class ResPartner(models.Model):
         ],
         string="Registration Type",
     )
+    fax = fields.Char()
     

@@ -10,6 +10,9 @@
 				<field name="date_of_registration" />
 				<field name="registration_type" />
 			</field>	
-		</field>
+			<field name="mobile" position="after">
+				<field name="fax" />
+		    </field>
+		</field>    
 	</record>
 </odoo>
